@@ -1,0 +1,15 @@
+work/
+**/__pycache__/
+**/*.pyc
+**/node_modules/
+**/*.log
+**/.openai/
+outputs/cadence-mcp/snapshots/
+outputs/cadence-mcp/simulation-results/
+outputs/circuit-workbench/data/
+**/id_rsa*
+**/id_ed25519*
+**/*.pem
+**/*.sqlite3*
+**/launch.json
+.env*

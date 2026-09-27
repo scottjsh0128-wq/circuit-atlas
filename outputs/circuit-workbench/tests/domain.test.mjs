@@ -1,0 +1,13 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {valueFor,evaluate} from '../dist/domain.js';
+const block={id:'b',cell:'tb',rails:['VDD'],roles:{M1:'saturation'},inspection:{sha256:'new'}};
+const spec={metric:'power.dc',unit:'W',comparison:'max',target:0.002,scope:{recipe:'dc'}};
+const run={id:'r',block_id:'b',status:'completed',payload:{cell:'tb',recipe:'dc',expected_sha256:'new'},result:{success:true,source_sha256:'new',model_sections:['NN'],operating_point:{kind:'dc',context:{'OpPointTemp.Value':'27'},sources:[{name:'VDD',raw:{pwr:-0.001}}],devices:[{name:'M1',margin:0.1,gm_id:20}]}}};
+test('DC supply sign and goal evaluation',()=>{assert.equal(valueFor(spec,run,block),0.001);assert.equal(evaluate(spec,[run],block).status,'pass');});
+test('final transient point is not DC power',()=>{const r=structuredClone(run);r.result.operating_point.kind='transient_final';assert.equal(valueFor(spec,r,block),null);});
+test('units and condition scope must match',()=>{assert.equal(valueFor({...spec,unit:'mW'},run,block),null);assert.equal(valueFor({...spec,scope:{temperature:70}},run,block),null);});
+test('margin needs an explicit saturation intention',()=>{const s={...spec,metric:'op.margin.min',unit:'V'};assert.equal(valueFor(s,run,block),0.1);assert.equal(valueFor(s,run,{...block,roles:{}}),null);});
+test('old source results cannot pass current circuit',()=>{assert.equal(evaluate(spec,[run],{...block,inspection:{sha256:'changed'}}).status,'stale');});
+test('worst result and unfinished runs cannot produce false pass',()=>{const r=structuredClone(run);r.result.operating_point.sources[0].raw.pwr=-0.003;assert.equal(evaluate(spec,[run,r],block).status,'fail');assert.equal(evaluate(spec,[run,{...run,status:'failed'}],block).status,'partial');});
+test('unsupported metrics stay unmeasured',()=>{assert.equal(evaluate({...spec,metric:'adc.sndr',unit:'dB'},[run],block).status,'unmeasured');});

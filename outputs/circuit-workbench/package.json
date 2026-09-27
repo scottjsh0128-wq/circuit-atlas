@@ -1,0 +1,1 @@
+{"name":"circuit-workbench","version":"0.1.0","private":true,"type":"module","scripts":{"test":"node --test tests/domain.test.mjs","check":"node --check dist/app.js && node --check dist/domain.js"}}
