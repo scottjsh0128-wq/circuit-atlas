@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Start Claude Code with Mindlogic models added next to the normal Claude models.
+# Plain `claude` is untouched; only sessions started with this command use the router.
+set -euo pipefail
+
+HERE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "${BASH_SOURCE[0]}")")" && pwd)"
+PORT="${MINDLOGIC_ROUTER_PORT:-18763}"
+TOKEN_FILE="$HOME/.claude/mindlogic-router.token"
+LOG_FILE="$HOME/.claude/mindlogic-router.log"
+DEFAULT_MODEL="${MINDLOGIC_DEFAULT_MODEL:-}"
+
+mkdir -p "$HOME/.claude"
+if [ ! -s "$TOKEN_FILE" ]; then
+  (umask 077; python3 -c 'import secrets;print(secrets.token_urlsafe(32))' > "$TOKEN_FILE")
+fi
+TOKEN="$(cat "$TOKEN_FILE")"
+
+healthy() { curl -s -m 2 -o /dev/null -w '%{http_code}' -H "X-Mindlogic-Router-Token: $TOKEN" "http://127.0.0.1:$PORT/health" | grep -q 200; }
+
+if ! healthy; then
+  nohup python3 "$HERE/router.py" --port "$PORT" --token-file "$TOKEN_FILE" >> "$LOG_FILE" 2>&1 &
+  for _ in $(seq 1 50); do healthy && break; sleep 0.1; done
+  healthy || { echo "Mindlogic 라우터를 시작하지 못했습니다. $LOG_FILE 을 확인하세요." >&2; exit 1; }
+fi
+
+export ANTHROPIC_BASE_URL="http://127.0.0.1:$PORT"
+export ANTHROPIC_CUSTOM_HEADERS="X-Mindlogic-Router-Token: $TOKEN${ANTHROPIC_CUSTOM_HEADERS:+
+$ANTHROPIC_CUSTOM_HEADERS}"
+if [ -n "$DEFAULT_MODEL" ]; then
+  exec claude --model "$DEFAULT_MODEL" "$@"
+fi
+exec claude "$@"
