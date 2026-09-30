@@ -1,5 +1,8 @@
 # Installs the claude-ml command for the current Windows user.
 # Adds Mindlogic models to Claude Code without changing the normal `claude` command or login.
+# -Models picks which Mindlogic models appear in /model (in that order); the choice is remembered.
+# -AllModels clears it so every model the key can use is listed again.
+param([string[]]$Models, [switch]$AllModels)
 $ErrorActionPreference = 'Stop'
 Get-Command py, pyw, claude -ErrorAction Stop | Out-Null
 & py -3 -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)"
@@ -43,11 +46,24 @@ if (!$key) {
 # List the models this key can use and add them to the /model picker of claude-ml sessions.
 $pickerFile = Join-Path $installDir 'picker-settings.json'
 try {
-    $models = Invoke-RestMethod -Uri 'https://factchat-cloud.mindlogic.ai/v1/gateway/models/?type=llm' `
+    $listing = Invoke-RestMethod -Uri 'https://factchat-cloud.mindlogic.ai/v1/gateway/models/?type=llm' `
         -Headers @{ Authorization = "Bearer $($key.Trim())" } -TimeoutSec 20
-    $data = if ($models.data) { $models.data } else { $models }
+    $data = if ($listing.data) { $listing.data } else { $listing }
     $ids = @($data | Where-Object { $_.type -eq 'llm' } | ForEach-Object { [string]$_.id } | Sort-Object -Unique)
     if (!$ids) { throw 'no llm models returned' }
+    $choiceFile = Join-Path $installDir 'models.txt'
+    if ($AllModels) { Remove-Item -Force -ErrorAction SilentlyContinue $choiceFile }
+    if ($Models) {
+        $wanted = @($Models | ForEach-Object { $_ -split '[,\s]+' } | Where-Object { $_ } | ForEach-Object { $_ -replace '^mindlogic/', '' })
+        [IO.File]::WriteAllText($choiceFile, ($wanted -join "`n") + "`n")
+    }
+    if (Test-Path $choiceFile) {
+        $wanted = @(Get-Content $choiceFile | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+        $missing = @($wanted | Where-Object { $ids -notcontains $_ })
+        if ($missing) { Write-Warning "Not available to this key, skipped: $($missing -join ', ')" }
+        $ids = @($wanted | Where-Object { $ids -contains $_ })
+        if (!$ids) { throw 'none of the chosen models are available' }
+    }
     # behavesAs lets this Claude Code version offer a model it does not know; it does not change the model sent.
     $rows = @($ids | ForEach-Object { @{ model = "mindlogic/$_"; label = "Mindlogic $([char]0x00B7) $_";
         description = 'Mindlogic Gateway (claude-ml)'; behavesAs = 'claude-sonnet-4-5' } })

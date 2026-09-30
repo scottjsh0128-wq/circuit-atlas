@@ -23,6 +23,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\claude-mindlogic-
 - `%USERPROFILE%\.claude\mindlogic\`에 파일을 복사하고, 이 폴더를 사용자 PATH에 추가합니다.
 - `FACTCHAT_API_KEY`를 환경변수, `%USERPROFILE%\.claude\mindlogic.env`, `%USERPROFILE%\.codex\.env` 순서로 찾습니다. 없으면 한 번 입력받아(화면에 표시 안 됨) `%USERPROFILE%\.claude\mindlogic.env`에 저장합니다.
 - 키로 사용 가능한 Mindlogic 모델을 조회해 `claude-ml`의 `/model` 선택 창에 `Mindlogic · ...` 항목으로 추가합니다(`picker-settings.json`). 계정에 모델이 추가되면 설치 스크립트를 다시 실행하세요.
+- 선택 창에 보일 모델만 고르려면 `-Models "gpt-6-sol,gpt-6-luna"`처럼 지정합니다. 선택은 `models.txt`에 저장되어 다음 설치에도 유지되고, `-AllModels`로 전체 목록으로 되돌립니다.
 
 설치 후 **새 터미널**을 여세요. 복사한 소스 폴더(`%TEMP%\claude-mindlogic-src`)는 지워도 됩니다.
 
