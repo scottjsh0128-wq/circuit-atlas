@@ -8,9 +8,12 @@ if ($LASTEXITCODE) { throw 'Python 3.10 or newer is required (py -3).' }
 $claudeDir = Join-Path $env:USERPROFILE '.claude'
 $installDir = Join-Path $claudeDir 'mindlogic'
 New-Item -ItemType Directory -Force $installDir | Out-Null
-foreach ($name in 'router.py', 'claude-ml.ps1', 'claude-ml.cmd') {
+foreach ($name in 'router.py', 'claude-ml-launcher.ps1', 'claude-ml.cmd') {
     Copy-Item -Force (Join-Path $PSScriptRoot $name) (Join-Path $installDir $name)
 }
+# PowerShell prefers claude-ml.ps1 over claude-ml.cmd and the default execution policy blocks it,
+# so only the .cmd (which runs the launcher with -ExecutionPolicy Bypass) may carry that name.
+Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $installDir 'claude-ml.ps1')
 
 $userPath = [Environment]::GetEnvironmentVariable('Path', 'User')
 if (($userPath -split ';') -notcontains $installDir) {
