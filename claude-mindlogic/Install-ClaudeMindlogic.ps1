@@ -37,15 +37,23 @@ if (!$key) {
 }
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
-# Show which models this key can use, as claude-ml model names.
+# List the models this key can use and add them to the /model picker of claude-ml sessions.
+$pickerFile = Join-Path $installDir 'picker-settings.json'
 try {
     $models = Invoke-RestMethod -Uri 'https://factchat-cloud.mindlogic.ai/v1/gateway/models/?type=llm' `
         -Headers @{ Authorization = "Bearer $($key.Trim())" } -TimeoutSec 20
     $data = if ($models.data) { $models.data } else { $models }
-    Write-Host 'Mindlogic models available to this key:'
-    $data | Where-Object { $_.type -eq 'llm' } | ForEach-Object { Write-Host "  mindlogic/$($_.id)" }
+    $ids = @($data | Where-Object { $_.type -eq 'llm' } | ForEach-Object { [string]$_.id } | Sort-Object -Unique)
+    if (!$ids) { throw 'no llm models returned' }
+    # behavesAs lets this Claude Code version offer a model it does not know; it does not change the model sent.
+    $rows = @($ids | ForEach-Object { @{ model = "mindlogic/$_"; label = "Mindlogic $([char]0x00B7) $_";
+        description = 'Mindlogic Gateway (claude-ml)'; behavesAs = 'claude-sonnet-4-5' } })
+    [IO.File]::WriteAllText($pickerFile, (@{ modelPicker = @{ options = $rows } } | ConvertTo-Json -Depth 6))
+    Write-Host 'Added to the claude-ml /model picker:'
+    $ids | ForEach-Object { Write-Host "  mindlogic/$_" }
 } catch {
-    Write-Warning "Could not list Mindlogic models ($($_.Exception.Message)). Check the key, network, or balance."
+    Write-Warning "Could not list Mindlogic models ($($_.Exception.Message)). Check the key, network, or balance, then run this installer again."
 }
 Write-Host ''
-Write-Host 'Done. Run:  claude-ml --model mindlogic/<model-id>   (plain `claude` is unchanged)'
+Write-Host 'Done. Open a new terminal and run:  claude-ml   (plain `claude` is unchanged)'
+Write-Host 'In /model, press s on a Mindlogic row to use it for this session only.'

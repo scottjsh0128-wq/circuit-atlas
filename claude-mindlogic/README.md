@@ -22,7 +22,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\claude-mindlogic-
 설치 스크립트가 하는 일:
 - `%USERPROFILE%\.claude\mindlogic\`에 파일을 복사하고, 이 폴더를 사용자 PATH에 추가합니다.
 - `FACTCHAT_API_KEY`를 환경변수, `%USERPROFILE%\.claude\mindlogic.env`, `%USERPROFILE%\.codex\.env` 순서로 찾습니다. 없으면 한 번 입력받아(화면에 표시 안 됨) `%USERPROFILE%\.claude\mindlogic.env`에 저장합니다.
-- 키로 사용 가능한 Mindlogic 모델을 `mindlogic/...` 이름으로 보여 줍니다.
+- 키로 사용 가능한 Mindlogic 모델을 조회해 `claude-ml`의 `/model` 선택 창에 `Mindlogic · ...` 항목으로 추가합니다(`picker-settings.json`). 계정에 모델이 추가되면 설치 스크립트를 다시 실행하세요.
 
 설치 후 **새 터미널**을 여세요. 복사한 소스 폴더(`%TEMP%\claude-mindlogic-src`)는 지워도 됩니다.
 

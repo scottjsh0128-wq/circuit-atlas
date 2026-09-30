@@ -36,11 +36,14 @@ if (!(Test-Router)) {
     if (!(Test-Router)) { throw "Mindlogic router did not start. Check $logFile.err" }
 }
 
+$pickerFile = Join-Path $PSScriptRoot 'picker-settings.json'
+$extra = if (Test-Path $pickerFile) { @('--settings', $pickerFile) } else { @() }
+
 $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:$port"
 $env:ANTHROPIC_CUSTOM_HEADERS = "X-Mindlogic-Router-Token: $token"
 if ($env:MINDLOGIC_DEFAULT_MODEL -and !($args -contains '--model')) {
-    & claude --model $env:MINDLOGIC_DEFAULT_MODEL @args
+    & claude @extra --model $env:MINDLOGIC_DEFAULT_MODEL @args
 } else {
-    & claude @args
+    & claude @extra @args
 }
 exit $LASTEXITCODE
