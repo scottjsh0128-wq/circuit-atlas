@@ -20,6 +20,7 @@ from pathlib import Path
 import re
 import socket
 import ssl
+import sys
 from urllib.parse import urlsplit
 import uuid
 
@@ -458,6 +459,9 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=18763)
     parser.add_argument("--token-file", type=Path, default=Path.home() / ".claude" / "mindlogic-router.token")
     args = parser.parse_args()
+    if sys.stdout is None:  # started by pythonw at login without redirection
+        log = open(Path.home() / ".claude" / "mindlogic-router.log", "a", encoding="utf-8", buffering=1)
+        sys.stdout = sys.stderr = log
     token = args.token_file.read_text().strip()
     if not token:
         raise SystemExit("Router token file is empty")

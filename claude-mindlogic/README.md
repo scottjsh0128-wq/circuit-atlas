@@ -25,6 +25,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\claude-mindlogic-
 - 키로 사용 가능한 Mindlogic 모델을 조회해 `claude-ml`의 `/model` 선택 창에 `Mindlogic · ...` 항목으로 추가합니다(`picker-settings.json`). 계정에 모델이 추가되면 설치 스크립트를 다시 실행하세요.
 - 선택 창에 보일 모델만 고르려면 `-Models "gpt-6-sol,gpt-6-luna"`처럼 지정합니다. 선택은 `models.txt`에 저장되어 다음 설치에도 유지되고, `-AllModels`로 전체 목록으로 되돌립니다.
 
+### 일반 `claude`와 데스크톱 앱 Code 탭에도 추가 (`-Global`)
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\claude-mindlogic-src\claude-mindlogic\Install-ClaudeMindlogic.ps1" -Global
+```
+
+- `%USERPROFILE%\.claude\settings.json`에 라우터 주소와 선택 창 항목을 추가합니다(수정 전 백업 생성). Claude 모델은 여전히 본인 로그인으로 Anthropic에 가고, `mindlogic/...`만 Mindlogic으로 갑니다.
+- 라우터가 Windows 로그인 때 자동으로 켜지도록 시작프로그램에 등록합니다. **라우터가 꺼져 있으면 일반 `claude`도 동작하지 않습니다.**
+- 되돌리기: 같은 명령에 `-Global` 대신 `-RemoveGlobal`. `claude-ml`은 계속 쓸 수 있습니다.
+- claude.ai 웹/데스크톱 앱의 **일반 채팅**은 외부 모델을 지원하지 않아 추가할 수 없습니다.
+
 설치 후 **새 터미널**을 여세요. 복사한 소스 폴더(`%TEMP%\claude-mindlogic-src`)는 지워도 됩니다.
 
 macOS/Linux에서는 `claude-ml`(bash) 파일을 PATH에 링크해서 같은 방식으로 씁니다.
