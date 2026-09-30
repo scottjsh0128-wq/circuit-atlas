@@ -8,30 +8,25 @@
   - 그 밖의 모델(`claude-...`) → 기존 Anthropic 로그인 그대로 Anthropic으로 전달
 - 한 세션 안에서 `/model`로 두 공급자를 오갈 수 있습니다.
 
-## 설치 (macOS, Python 3.11+)
+## 설치 (Windows)
 
-1. **API 키**: Codex 설정 때 만든 `~/.codex/.env`의 `FACTCHAT_API_KEY`를 그대로 읽습니다. 따로 할 일이 없습니다.
-   Codex 설정이 없다면 `~/.claude/mindlogic.env`에 `FACTCHAT_API_KEY=발급받은_키` 한 줄을 넣고 `chmod 600 ~/.claude/mindlogic.env`를 실행하세요.
-2. 이 폴더를 받고 명령어를 등록합니다.
+준비물: Claude Code(`claude` 명령), Python 3.10 이상과 `py` 런처, Git.
 
-   ```bash
-   git clone -b claude/token-connection-setup-zwc3gg https://github.com/scottjsh0128-wq/circuit-atlas.git
-   mkdir -p ~/.local/bin
-   ln -sf "$PWD/circuit-atlas/claude-mindlogic/claude-ml" ~/.local/bin/claude-ml
-   ```
+PowerShell에서 아래를 그대로 실행합니다.
 
-   `~/.local/bin`이 PATH에 없다면 `~/.zshrc`에 `export PATH="$HOME/.local/bin:$PATH"`를 추가하세요.
-
-## 사용
-
-```bash
-claude-ml                                   # 평소처럼 Claude 모델로 시작
-claude-ml --model mindlogic/gpt-6-luna      # Mindlogic 모델로 시작
+```powershell
+git clone -b claude/token-connection-setup-zwc3gg https://github.com/scottjsh0128-wq/circuit-atlas.git "$env:TEMP\claude-mindlogic-src"
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:TEMP\claude-mindlogic-src\claude-mindlogic\Install-ClaudeMindlogic.ps1"
 ```
 
-세션 안에서 `/model mindlogic/gpt-6-sol`, `/model claude-sonnet-5-5`처럼 바꿀 수 있습니다. 모델 이름은 Mindlogic 계정의 모델 ID 앞에 `mindlogic/`을 붙인 것입니다.
+설치 스크립트가 하는 일:
+- `%USERPROFILE%\.claude\mindlogic\`에 파일을 복사하고, 이 폴더를 사용자 PATH에 추가합니다.
+- `FACTCHAT_API_KEY`를 환경변수, `%USERPROFILE%\.claude\mindlogic.env`, `%USERPROFILE%\.codex\.env` 순서로 찾습니다. 없으면 한 번 입력받아(화면에 표시 안 됨) `%USERPROFILE%\.claude\mindlogic.env`에 저장합니다.
+- 키로 사용 가능한 Mindlogic 모델을 `mindlogic/...` 이름으로 보여 줍니다.
 
-첫 실행 시 `isn't described by this version's model catalog` 안내가 한 번 나올 수 있습니다. Claude Code가 모르는 모델이라는 뜻이며 동작에는 문제없습니다.
+설치 후 **새 터미널**을 여세요. 복사한 소스 폴더(`%TEMP%\claude-mindlogic-src`)는 지워도 됩니다.
+
+macOS/Linux에서는 `claude-ml`(bash) 파일을 PATH에 링크해서 같은 방식으로 씁니다.
 
 ## 동작 방식과 보안
 
@@ -44,5 +39,7 @@ claude-ml --model mindlogic/gpt-6-luna      # Mindlogic 모델로 시작
 ## 문제 해결
 
 - **Mindlogic HTTP 402**: 키의 잔액·사용량을 확인하세요. Anthropic으로 자동 우회하지 않습니다.
-- **라우터 시작 실패**: `~/.claude/mindlogic-router.log`를 확인하세요. 멈추려면 `pkill -f claude-mindlogic/router.py`.
+- **라우터 시작 실패**: `%USERPROFILE%\.claude\mindlogic-router.log.err`를 확인하세요.
+- **라우터 멈추기**: 백그라운드에서 계속 돕니다(`claude-ml`을 실행하면 자동으로 다시 켜짐). 멈추려면 PowerShell에서
+  `Get-CimInstance Win32_Process -Filter "Name='pythonw.exe'" | ? CommandLine -like '*mindlogic*router.py*' | % { Stop-Process -Id $_.ProcessId }`
 - **Claude 모델이 `claude-ml`에서만 인증 오류**: 평소처럼 `claude`로 쓰면 됩니다. Mindlogic 모델은 `claude-ml`에서만 필요합니다.
